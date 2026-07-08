@@ -15,8 +15,8 @@ const nunito = Nunito({
 });
 
 export const metadata = {
-  title: "El Mercado de los Suenos",
-  description: "Mini juego educativo de matematica con Michi Money.",
+  title: "El Mercado de los Sueños",
+  description: "Mini juego educativo de matemática con Michi Money.",
 };
 
 export default function RootLayout({ children }) {

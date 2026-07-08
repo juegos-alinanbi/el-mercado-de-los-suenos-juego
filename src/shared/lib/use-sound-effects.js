@@ -1,6 +1,66 @@
 "use client";
 
 let sharedAudioContext = null;
+let unlockListenersAttached = false;
+let hasWarnedUnsupported = false;
+
+function getAudioContextClass() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.AudioContext || window.webkitAudioContext || null;
+}
+
+function attachUnlockListeners(audioContext) {
+  if (unlockListenersAttached || typeof window === "undefined") {
+    return;
+  }
+
+  unlockListenersAttached = true;
+
+  const tryResume = () => {
+    if (audioContext.state === "suspended") {
+      audioContext.resume().catch((error) => {
+        console.warn("[audio] El navegador no permitio reanudar el audio tras la interaccion del usuario.", error);
+      });
+    }
+  };
+
+  // Algunos navegadores (sobre todo movil/Safari) dejan el AudioContext
+  // suspendido aunque el resume() se dispare desde un boton concreto. Este
+  // listener global reintenta el desbloqueo con la primera interaccion real,
+  // que es donde suele fallar el audio en produccion pero no en local.
+  ["pointerdown", "touchend", "keydown"].forEach((eventName) => {
+    window.addEventListener(eventName, tryResume, { passive: true });
+  });
+}
+
+function getSharedAudioContext() {
+  if (sharedAudioContext) {
+    return sharedAudioContext;
+  }
+
+  const AudioContextClass = getAudioContextClass();
+
+  if (!AudioContextClass) {
+    if (!hasWarnedUnsupported) {
+      console.warn("[audio] Este navegador no soporta Web Audio API. El juego seguira funcionando sin sonido.");
+      hasWarnedUnsupported = true;
+    }
+    return null;
+  }
+
+  try {
+    sharedAudioContext = new AudioContextClass();
+  } catch (error) {
+    console.warn("[audio] No se pudo crear el AudioContext.", error);
+    return null;
+  }
+
+  attachUnlockListeners(sharedAudioContext);
+  return sharedAudioContext;
+}
 
 function createTone(audioContext, frequency, startAt, duration, volume, type) {
   const oscillator = audioContext.createOscillator();
@@ -21,40 +81,34 @@ function createTone(audioContext, frequency, startAt, duration, volume, type) {
 }
 
 export function useSoundEffects(enabled) {
-  function getAudioContext() {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-
-    if (!AudioContextClass) {
-      return null;
-    }
-
-    if (!sharedAudioContext) {
-      sharedAudioContext = new AudioContextClass();
-    }
-
-    return sharedAudioContext;
-  }
-
   function withAudioContext(playback) {
     if (!enabled) {
       return;
     }
 
-    const context = getAudioContext();
+    const context = getSharedAudioContext();
     if (!context) {
       return;
     }
 
     const runPlayback = () => {
-      playback(context);
+      try {
+        playback(context);
+      } catch (error) {
+        console.warn("[audio] Fallo al reproducir un efecto de sonido.", error);
+      }
     };
 
     if (context.state === "suspended") {
-      context.resume().then(runPlayback).catch(() => {});
+      context
+        .resume()
+        .then(runPlayback)
+        .catch((error) => {
+          console.warn(
+            "[audio] El navegador bloqueo la reanudacion del audio (politica de autoplay). Sonara en la siguiente interaccion.",
+            error,
+          );
+        });
       return;
     }
 

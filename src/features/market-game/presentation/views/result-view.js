@@ -40,7 +40,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
   if (!purchaseSuccess) {
     return {
       title: "Casi lo logras",
-      description: "Revisa el carrito o el pago y vuelve a intentarlo. Cuando la compra este bien, el ahorro se convertira en fichas premio.",
+      description: "Revisa el carrito o el pago y vuelve a intentarlo. Cuando la compra esté bien, el ahorro se convertirá en fichas premio.",
       accent: "amber",
       mood: "cat-worried",
     };
@@ -48,8 +48,8 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
 
   if (mission.sharing && !isLevelComplete) {
     return {
-      title: "La compra ya quedo bien",
-      description: "Ahora resuelve el reparto para cerrar la mision y guardar las fichas de este nivel en la alcancia de Michi Money.",
+      title: "La compra ya quedó bien",
+      description: "Ahora resuelve el reparto para cerrar la misión y guardar las fichas de este nivel en la alcancía de Michi Money.",
       accent: "sky",
       mood: "thinking",
     };
@@ -58,7 +58,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
   if (isFinalLevel && isLevelComplete) {
     return {
       title: "Terminaste toda la aventura",
-      description: `Cerraste la ultima mision, cuidaste el presupuesto y juntaste ${totalTokens} fichas en total. Este cierre especial seguira apareciendo siempre en el ultimo nivel del juego.`,
+      description: `Cerraste la última misión, cuidaste el presupuesto y juntaste ${totalTokens} fichas en total. Este cierre especial seguirá apareciendo siempre en el último nivel del juego.`,
       accent: "emerald",
       mood: "party",
     };
@@ -76,7 +76,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
   if (mission.id === "level-3") {
     return {
       title: "Compartiste y ahorraste muy bien",
-      description: `Ademas de resolver el reparto, convertiste tu ahorro en ${earnedTokens} fichas. Ya llevas ${totalTokens} fichas acumuladas.`,
+      description: `Además de resolver el reparto, convertiste tu ahorro en ${earnedTokens} fichas. Ya llevas ${totalTokens} fichas acumuladas.`,
       accent: "sky",
       mood: "party",
     };
@@ -84,7 +84,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
 
   return {
     title: "Lo lograste",
-    description: `Tu ahorro de este nivel se convirtio en ${earnedTokens} fichas. Ya tienes ${totalTokens} fichas acumuladas para seguir jugando.`,
+    description: `Tu ahorro de este nivel se convirtió en ${earnedTokens} fichas. Ya tienes ${totalTokens} fichas acumuladas para seguir jugando.`,
     accent: "emerald",
     mood: "cat-happy",
   };
@@ -134,7 +134,7 @@ function FinaleHero({ totalSavedAmount, totalRewardTokens }) {
         <p className="mt-4 text-sm font-extrabold uppercase tracking-[0.24em] text-game-coral">Gran final del juego</p>
         <h2 className="mt-3 font-heading text-4xl font-bold text-game-ink sm:text-5xl">Aventura completada</h2>
         <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-game-ink/80 sm:text-xl">
-          Michi Money celebro tu ayuda porque compraste bien, pagaste bien y compartiste bien. Este bloque aparece siempre cuando completas el ultimo nivel disponible.
+          Michi Money celebró tu ayuda porque compraste bien, pagaste bien y compartiste bien. Este bloque aparece siempre cuando completas el último nivel disponible.
         </p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -306,11 +306,11 @@ export function ResultView() {
               <h1 className="mt-1 font-heading text-3xl font-bold text-game-ink sm:text-4xl">
                 {isLevelComplete
                   ? isFinalLevel
-                    ? "Ultimo nivel completado con exito"
-                    : "Mision completada con exito"
+                    ? "Último nivel completado con éxito"
+                    : "Misión completada con éxito"
                   : purchaseSuccess && mission.sharing
                     ? "Compra correcta, falta el reparto"
-                    : "La partida aun no esta completa"}
+                    : "La partida aún no está completa"}
               </h1>
             </div>
           </div>
@@ -318,15 +318,15 @@ export function ResultView() {
           <p className="mt-4 max-w-3xl text-xl leading-8 text-game-ink/80">
             {isLevelComplete
               ? isFinalLevel
-                ? "Cerraste la ultima mision disponible. Este final especial siempre aparecera en el ultimo nivel del juego, aunque despues agregues mas niveles nuevos."
+                ? "Cerraste la última misión disponible. Este final especial siempre aparecerá en el último nivel del juego, aunque después agregues más niveles nuevos."
                 : "Lograste comprar exactamente lo pedido, respetaste el presupuesto y transformaste tu ahorro en fichas premio."
               : purchaseSuccess && mission.sharing
-                ? "La compra y el pago ya estan correctos. Ahora resuelve el reparto para cerrar este nivel y guardar el premio final."
-                : "Todavia hay algo por corregir en la compra o en el pago. Revisa el detalle antes de volver a intentarlo."}
+                ? "La compra y el pago ya están correctos. Ahora resuelve el reparto para cerrar este nivel y guardar el premio final."
+                : "Todavía hay algo por corregir en la compra o en el pago. Revisa el detalle antes de volver a intentarlo."}
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Compra correcta" value={missionState.isReadyForCheckout ? "Si" : "No"} accent="emerald" icon="check" />
+            <MetricCard label="Compra correcta" value={missionState.isReadyForCheckout ? "Sí" : "No"} accent="emerald" icon="check" />
             <MetricCard label="Cambio de caja" value={formatCurrency(paymentState.change)} accent="sky" icon="coin" />
             <MetricCard label="Ahorro del nivel" value={formatCurrency(missionSavings)} accent="amber" icon="bill" />
             <MetricCard
@@ -342,14 +342,14 @@ export function ResultView() {
             <article className="mt-6 rounded-[1.75rem] border-2 border-game-berry/20 bg-gradient-to-r from-game-sun/15 via-white to-game-berry/10 p-5 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-sm font-extrabold uppercase tracking-wide text-game-berry">Alcancia de Michi Money</p>
+                  <p className="text-sm font-extrabold uppercase tracking-wide text-game-berry">Alcancía de Michi Money</p>
                   <h2 className="mt-1 font-heading text-2xl font-bold text-game-ink">
-                    {isFinalLevel ? "Tu premio final ya quedo guardado" : "Tu ahorro ya se convirtio en premio"}
+                    {isFinalLevel ? "Tu premio final ya quedó guardado" : "Tu ahorro ya se convirtió en premio"}
                   </h2>
                   <p className="mt-2 max-w-xl text-base leading-7 text-game-ink/75">
                     {isFinalLevel
-                      ? "Llegaste al cierre de la aventura. La alcancia ya muestra todo lo que juntaste durante el recorrido."
-                      : "Cada ficha representa una compra inteligente. Mientras mejor administras el presupuesto, mas llena queda la alcancia de Michi Money."}
+                      ? "Llegaste al cierre de la aventura. La alcancía ya muestra todo lo que juntaste durante el recorrido."
+                      : "Cada ficha representa una compra inteligente. Mientras mejor administras el presupuesto, más llena queda la alcancía de Michi Money."}
                   </p>
                 </div>
                 <div className="space-y-3">
@@ -364,7 +364,7 @@ export function ResultView() {
 
           <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
             <article className="rounded-[1.5rem] bg-slate-50 p-6">
-              <h2 className="font-heading text-xl font-bold text-game-ink">Detalle matematico</h2>
+              <h2 className="font-heading text-xl font-bold text-game-ink">Detalle matemático</h2>
               <div className="mt-4 space-y-3 text-base text-game-ink/80">
                 {missionState.objectiveChecks.map((item) => (
                   <div key={item.id} className="rounded-2xl bg-white px-4 py-3">
@@ -383,10 +383,10 @@ export function ResultView() {
 
             <article className="space-y-4">
               <article className="rounded-[1.5rem] bg-game-coral/10 p-6">
-                <h2 className="font-heading text-xl font-bold text-game-ink">Asi termino tu compra</h2>
+                <h2 className="font-heading text-xl font-bold text-game-ink">Así terminó tu compra</h2>
                 <ul className="mt-4 space-y-3 text-base leading-7 text-game-ink/80">
                   <li>Tu compra costaba {formatCurrency(missionState.total)}.</li>
-                  <li>Michi Money tenia {formatCurrency(mission.budget)} de presupuesto para este nivel.</li>
+                  <li>Michi Money tenía {formatCurrency(mission.budget)} de presupuesto para este nivel.</li>
                   <li>En caja entregaste {formatCurrency(paymentState.paidAmount)}.</li>
                   <li>
                     Ahorro del presupuesto: {formatSubtractionEquation(mission.budget, missionState.total, Math.max(0, mission.budget - missionState.total))}.
@@ -436,7 +436,7 @@ export function ResultView() {
                 <div>
                   <h2 className="font-heading text-xl font-bold text-game-ink">Te falta cerrar el reto final</h2>
                   <p className="mt-2 max-w-2xl text-base leading-7 text-game-ink/80">
-                    La compra ya esta validada, pero este nivel solo se completa cuando resuelves bien el reparto. Al acertar, se guardaran {missionSavings} fichas y {formatCurrency(missionSavings)} de ahorro en tu progreso.
+                    La compra ya está validada, pero este nivel solo se completa cuando resuelves bien el reparto. Al acertar, se guardarán {missionSavings} fichas y {formatCurrency(missionSavings)} de ahorro en tu progreso.
                   </p>
                 </div>
                 <RewardTokenDisplay count={missionSavings} maxVisible={6} size={18} tone="sky" />
@@ -473,7 +473,7 @@ export function ResultView() {
             <article className="mt-6 rounded-[1.5rem] bg-game-sky/10 p-6">
               <h2 className="font-heading text-xl font-bold text-game-ink">Reto extra: reparto</h2>
               <p className="mt-2 max-w-2xl text-base leading-7 text-game-ink/80">
-                Tienes {mission.sharing.totalQuantity} {mission.sharing.productNamePlural} para repartir en partes iguales entre Michi Money y sus amigos ({mission.sharing.groupSize} en total). Cuantas le tocan a cada uno?
+                Tienes {mission.sharing.totalQuantity} {mission.sharing.productNamePlural} para repartir en partes iguales entre Michi Money y sus amigos ({mission.sharing.groupSize} en total). ¿Cuántas le tocan a cada uno?
               </p>
 
               <div className="mt-4 flex w-fit items-center gap-3 rounded-2xl bg-white p-3">
@@ -501,7 +501,7 @@ export function ResultView() {
                       ? "Ajusta el contador para responder."
                       : sharingState.isCorrect
                         ? `Correcto. ${mission.sharing.totalQuantity} entre ${mission.sharing.groupSize} son ${sharingState.quotient} para cada uno.`
-                        : "Todavia no es correcto, sigue intentando."
+                        : "Todavía no es correcto, sigue intentando."
                   }
                   tone={sharingAnswer === 0 ? "neutral" : sharingState.isCorrect ? "success" : "warning"}
                 />

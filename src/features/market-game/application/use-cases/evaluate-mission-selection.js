@@ -34,20 +34,20 @@ export function evaluateMissionSelection(mission, products, cartQuantities) {
     extraSelections.length === 0 &&
     !exceedsBudget;
 
-  let statusMessage = "Selecciona las cantidades exactas de la mision.";
+  let statusMessage = "Selecciona las cantidades exactas de la misión.";
 
   if (isReadyForCheckout) {
-    statusMessage = "La compra esta correcta. Ya puedes ir a caja.";
+    statusMessage = "La compra está correcta. Ya puedes ir a caja.";
   } else if (!cartSummary.hasSelections) {
-    statusMessage = "Aun no has agregado productos al carrito.";
+    statusMessage = "Aún no has agregado productos al carrito.";
   } else if (exceedsBudget) {
     statusMessage = "Te pasaste del presupuesto. Ajusta tu carrito.";
   } else if (extraSelections.length > 0) {
-    statusMessage = "Hay productos extra que no pertenecen a la mision.";
+    statusMessage = "Hay productos extra que no pertenecen a la misión.";
   } else if (mismatchedObjectives.some((item) => item.isOverSelected)) {
-    statusMessage = "Revisa las cantidades. Tienes productos de mas.";
+    statusMessage = "Revisa las cantidades. Tienes productos de más.";
   } else if (mismatchedObjectives.some((item) => item.isMissing)) {
-    statusMessage = "Todavia faltan cantidades para completar la mision.";
+    statusMessage = "Todavía faltan cantidades para completar la misión.";
   }
 
   return {

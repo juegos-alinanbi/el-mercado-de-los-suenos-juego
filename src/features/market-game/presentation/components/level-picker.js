@@ -45,7 +45,7 @@ export function LevelPicker() {
 
         <div className="inline-flex items-center gap-2 rounded-full border-2 border-game-grass/35 bg-white/75 px-4 py-3 text-sm font-bold text-game-ink shadow-sm">
           <EmojiIcon name="abacus" size={22} />
-          Aprende suma, resta, multiplicacion y cambio
+          Aprende suma, resta, multiplicación y cambio
         </div>
       </div>
 

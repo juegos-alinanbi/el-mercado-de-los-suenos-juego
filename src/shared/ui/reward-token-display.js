@@ -15,7 +15,7 @@ export function RewardTokenDisplay({ count, maxVisible = 6, size = 18, compact =
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm">
           <EmojiIcon name="star" size={size} />
         </span>
-        <span className="text-sm font-bold text-game-ink/65">Aun sin fichas</span>
+        <span className="text-sm font-bold text-game-ink/65">Aún sin fichas</span>
       </div>
     );
   }

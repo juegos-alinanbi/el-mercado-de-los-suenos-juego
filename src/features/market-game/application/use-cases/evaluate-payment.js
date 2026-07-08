@@ -12,15 +12,15 @@ export function evaluatePayment(total, paidAmount) {
   let statusMessage = "Agrega dinero para pagar la compra.";
 
   if (total <= 0) {
-    statusMessage = "Primero completa una compra valida en el mercado.";
+    statusMessage = "Primero completa una compra válida en el mercado.";
   } else if (paidAmount === 0) {
-    statusMessage = "Aun no has agregado dinero al pago.";
+    statusMessage = "Aún no has agregado dinero al pago.";
   } else if (isExact) {
     statusMessage = "Pago exacto. No necesitas cambio.";
   } else if (isEnough) {
     statusMessage = `Pago suficiente. Debes recibir $${change} de cambio.`;
   } else {
-    statusMessage = `Todavia faltan $${missingAmount} para completar el pago.`;
+    statusMessage = `Todavía faltan $${missingAmount} para completar el pago.`;
   }
 
   return {

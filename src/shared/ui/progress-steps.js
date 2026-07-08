@@ -7,7 +7,7 @@ import { EmojiIcon } from "@/shared/ui/emoji-icon";
 import { RewardTokenDisplay } from "@/shared/ui/reward-token-display";
 
 const steps = [
-  { id: "mission", label: "Mision", icon: "thinking" },
+  { id: "mission", label: "Misión", icon: "thinking" },
   { id: "market", label: "Mercado", icon: "cart" },
   { id: "checkout", label: "Caja", icon: "wallet" },
   { id: "result", label: "Resultado", icon: "star" },

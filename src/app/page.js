@@ -31,7 +31,7 @@ export default function HomePage() {
         <div className="grid w-full items-center gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
           <article className="text-center lg:text-left">
             <span className="inline-flex rounded-full border border-white/80 bg-white/75 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.28em] text-game-sky shadow-sm sm:text-sm">
-              El Mercado de los Suenos
+              El Mercado de los Sueños
             </span>
 
             <div className="mx-auto mt-5 flex h-28 w-28 animate-float-bob items-center justify-center rounded-full border-[6px] border-white bg-white shadow-[0_20px_40px_rgba(36,34,90,0.16)] sm:h-32 sm:w-32 lg:mx-0 lg:h-36 lg:w-36">
@@ -45,8 +45,13 @@ export default function HomePage() {
               Michi Money en el Mercado
             </h1>
 
+            <span className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-game-grass/35 bg-game-grass/10 px-4 py-1.5 text-sm font-extrabold text-game-grass lg:mx-0">
+              <EmojiIcon name="star" size={16} />
+              Para niños de 10 años en adelante
+            </span>
+
             <p className="mx-auto mt-4 max-w-xl text-lg font-semibold leading-8 text-game-ink/80 sm:text-xl lg:mx-0">
-              Compra, calcula y paga sin pasarte del presupuesto en una aventura corta, colorida y facil de entender.
+              Compra, calcula y paga sin pasarte del presupuesto en una aventura corta, colorida y fácil de entender.
             </p>
 
             <LevelPicker />
@@ -76,10 +81,10 @@ export default function HomePage() {
 
             <article className="relative overflow-hidden rounded-[2.3rem] border-4 border-white/85 bg-white/88 p-5 shadow-[0_24px_60px_rgba(56,102,160,0.2)] backdrop-blur-sm sm:p-6 lg:p-7">
               <div className="absolute right-5 top-5 rounded-full bg-game-sun/20 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.18em] text-game-ink/70">
-                Nivel basico
+                Nivel básico
               </div>
 
-              <p className="text-sm font-extrabold uppercase tracking-[0.24em] text-game-coral">Mision destacada</p>
+              <p className="text-sm font-extrabold uppercase tracking-[0.24em] text-game-coral">Misión destacada</p>
               <h2 className="mt-3 max-w-sm font-heading text-3xl font-bold text-game-ink sm:text-4xl">
                 Ayuda a Michi Money a comprar la merienda
               </h2>
@@ -106,9 +111,9 @@ export default function HomePage() {
                     <EmojiIcon name="wallet" size={24} />
                   </div>
                   <div>
-                    <p className="text-sm font-extrabold uppercase tracking-[0.18em] text-game-berry">Asi se aprende jugando</p>
+                    <p className="text-sm font-extrabold uppercase tracking-[0.18em] text-game-berry">Así se aprende jugando</p>
                     <p className="mt-1 text-lg font-bold leading-7 text-game-ink">
-                      Veras que 2 panes de $2 cuestan $4. Luego sumaras el total de la compra y revisaras cuanto cambio recibes.
+                      Elige bien las cantidades, calcula el total de tu compra y descubre cuánto cambio recibes al pagar.
                     </p>
                   </div>
                 </div>

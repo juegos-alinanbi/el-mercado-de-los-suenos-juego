@@ -21,7 +21,7 @@ import { StatusBanner } from "@/shared/ui/status-banner";
 function toneForCategory(category) {
   if (category === "Frutas") return "emerald";
   if (category === "Bebidas") return "sky";
-  if (category === "Lacteos") return "sky";
+  if (category === "Lácteos") return "sky";
   return "amber";
 }
 
@@ -100,14 +100,14 @@ export function MarketView() {
               <p className="text-sm font-extrabold uppercase tracking-wide text-game-coral">Mercado interactivo</p>
               <h1 className="mt-4 font-heading text-4xl font-bold text-game-ink">Elige justo lo que necesitas</h1>
               <p className="mt-3 max-w-2xl text-lg leading-8 text-game-ink/75">
-                Cada decision cambia el total y el presupuesto. Mira como la cantidad afecta el subtotal de cada producto.
+                Cada decisión cambia el total y el presupuesto. Mira cómo la cantidad afecta el subtotal de cada producto.
               </p>
             </div>
 
             <div className={`rounded-[1.5rem] border-2 px-5 py-4 text-right ${purchaseStateStyles.container}`}>
               <p className={`text-sm font-bold uppercase tracking-wide ${purchaseStateStyles.label}`}>Estado de la compra</p>
               <p className={`mt-2 font-heading text-xl font-bold ${purchaseStateStyles.value}`}>
-                {missionState.isReadyForCheckout ? "Lista para caja" : "Aun en revision"}
+                {missionState.isReadyForCheckout ? "Lista para caja" : "Aún en revisión"}
               </p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export function MarketView() {
                     </div>
                     {isRequired ? (
                       <p className="mt-2 text-sm font-semibold text-game-ink/50">
-                        Aprendes: {requiredQuantity} x {formatCurrency(product.price)} forma parte del total.
+                        Aprendes: {requiredQuantity} x {formatCurrency(product.price)} = {formatCurrency(requiredQuantity * product.price)}
                       </p>
                     ) : null}
                   </motion.article>
@@ -213,7 +213,7 @@ export function MarketView() {
             <aside className="space-y-4">
               <MascotCallout
                 title="Observa antes de avanzar"
-                description="Si el total sube demasiado o aparece un producto extra, la mision deja de ser valida aunque el carrito se vea lleno."
+                description="Si el total sube demasiado o aparece un producto extra, la misión deja de ser válida aunque el carrito se vea lleno."
                 accent="amber"
                 mood="thinking"
               />
@@ -240,18 +240,32 @@ export function MarketView() {
                       </div>
                     </>
                   ) : (
-                    <p>Aun no has seleccionado productos.</p>
+                    <p>Aún no has seleccionado productos.</p>
                   )}
                 </div>
               </article>
 
               <article className="rounded-[1.5rem] bg-game-sun/10 p-6">
-                <h2 className="font-heading text-xl font-bold text-game-ink">Revision de la mision</h2>
+                <h2 className="font-heading text-xl font-bold text-game-ink">Revisión de la misión</h2>
                 <div className="mt-4 space-y-3 text-base text-game-ink/80">
                   {missionState.objectiveChecks.map((item) => (
-                    <div key={item.id} className="rounded-2xl bg-white/70 px-4 py-3">
-                      <p className="font-bold text-game-ink">{item.name}</p>
-                      <p>Necesitas {item.requiredQuantity} y llevas {item.selectedQuantity}.</p>
+                    <div
+                      key={item.id}
+                      className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 ${
+                        item.isMatched ? "bg-game-grass/15" : "bg-white/70"
+                      }`}
+                    >
+                      <div>
+                        <p className="font-bold text-game-ink">{item.name}</p>
+                        <p>Necesitas {item.requiredQuantity} y llevas {item.selectedQuantity}.</p>
+                      </div>
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                          item.isMatched ? "bg-game-grass/25" : "bg-slate-100"
+                        }`}
+                      >
+                        <EmojiIcon name={item.isMatched ? "check" : "cross"} size={20} />
+                      </span>
                     </div>
                   ))}
 
@@ -270,7 +284,7 @@ export function MarketView() {
               <div className="flex flex-wrap gap-3">
                 <ActionButton onClick={handleGoCheckout} disabled={!missionState.isReadyForCheckout}>Ir a caja</ActionButton>
                 <ActionButton variant="secondary" onClick={handleClearCart}>Limpiar carrito</ActionButton>
-                <ActionButton variant="secondary" onClick={handleBackMission}>Volver a mision</ActionButton>
+                <ActionButton variant="secondary" onClick={handleBackMission}>Volver a misión</ActionButton>
               </div>
             </aside>
           </div>

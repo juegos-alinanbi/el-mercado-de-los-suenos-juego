@@ -2,7 +2,7 @@ export const missionsMock = [
   {
     id: "level-1",
     level: 1,
-    title: "Mision 1: La compra para la merienda",
+    title: "Misión 1: La compra para la merienda",
     description:
       "Ayuda a Michi Money a comprar 2 panes, 1 leche y 1 manzana sin superar el presupuesto de $10.",
     budget: 10,
@@ -16,9 +16,9 @@ export const missionsMock = [
   {
     id: "level-2",
     level: 2,
-    title: "Mision 2: La fiesta de cumpleanos",
+    title: "Misión 2: La fiesta de cumpleaños",
     description:
-      "Michi Money organiza una fiesta y necesita comprar mas cantidad de cada cosa sin superar el presupuesto de $20.",
+      "Michi Money organiza una fiesta y necesita comprar más cantidad de cada cosa sin superar el presupuesto de $20.",
     budget: 20,
     objectives: [
       { id: "product-pan", name: "Pan", quantity: 3 },
@@ -31,7 +31,7 @@ export const missionsMock = [
   {
     id: "level-3",
     level: 3,
-    title: "Mision 3: La merienda compartida",
+    title: "Misión 3: La merienda compartida",
     description:
       "Michi Money invita a 2 amigos a la merienda. Compra lo necesario y luego reparte las manzanas en partes iguales entre los 3.",
     budget: 15,
