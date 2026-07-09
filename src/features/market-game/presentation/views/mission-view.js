@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { calculateMissionExpectedTotal } from "@/features/market-game/application/use-cases/calculate-mission-expected-total";
 import { useMarketGameStore } from "@/features/market-game/model/use-market-game-store";
 import { formatCurrency } from "@/shared/lib/format-currency";
+import { formatFichas } from "@/shared/lib/pluralize";
 import { useSoundEffects } from "@/shared/lib/use-sound-effects";
 import { getProductIcon } from "@/shared/config/product-icons";
 import { ActionButton } from "@/shared/ui/action-button";
@@ -19,7 +20,7 @@ function getMissionMascotMessage(mission, possibleSavings) {
   if (mission.id === "level-2") {
     return {
       title: "Hoy preparas una fiesta",
-      description: `Aquí compras más cantidad de productos. Si completas bien la lista y ahorras ${formatCurrency(possibleSavings)}, Michi gana ${possibleSavings} fichas premio.`,
+      description: `Aquí compras más productos. Si completas bien la lista y ahorras ${formatCurrency(possibleSavings)}, Michi gana ${formatFichas(possibleSavings)}.`,
       accent: "coral",
       mood: "cat-happy",
     };
@@ -36,10 +37,28 @@ function getMissionMascotMessage(mission, possibleSavings) {
 
   return {
     title: "Hoy compras para la merienda",
-    description: `Observa con calma. Si compras solo lo pedido, el ahorro de ${formatCurrency(possibleSavings)} se transforma en fichas premio para Michi Money.`,
+    description: `Observa con calma. Si compras solo lo pedido, el ahorro de ${formatCurrency(possibleSavings)} se transforma en fichas para Michi Money.`,
     accent: "amber",
     mood: "cat-neutral",
   };
+}
+
+function formatObjectiveLabel(quantity, name) {
+  const normalizedName = name.toLowerCase();
+  const irregularPlurals = {
+    pan: "panes",
+    leche: "leches",
+    manzana: "manzanas",
+    queso: "quesos",
+  };
+
+  if (quantity === 1) {
+    const singularName = normalizedName.endsWith("s") ? normalizedName.slice(0, -1) : normalizedName;
+    return `${quantity} ${singularName}`;
+  }
+
+  const pluralName = irregularPlurals[normalizedName] ?? (normalizedName.endsWith("s") ? normalizedName : `${normalizedName}s`);
+  return `${quantity} ${pluralName}`;
 }
 
 export function MissionView() {
@@ -97,7 +116,7 @@ export function MissionView() {
                         <EmojiIcon name={getProductIcon(objective.id)} size={28} />
                       </div>
                       <div>
-                        <p className="font-bold text-game-ink">{objective.quantity} x {objective.name}</p>
+                        <p className="font-bold text-game-ink">{formatObjectiveLabel(objective.quantity, objective.name)}</p>
                         <p className="mt-1 text-game-ink/70">Precio unidad: {formatCurrency(product?.price ?? 0)}</p>
                       </div>
                     </li>

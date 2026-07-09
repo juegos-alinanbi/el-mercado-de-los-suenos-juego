@@ -11,13 +11,34 @@ import {
   sanitizeQuantity,
 } from "@/features/market-game/domain/game-rules";
 
-function createInitialState() {
+function shuffleProducts(products) {
+  const shuffled = [...products];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function createSharingBaskets(groupSize) {
+  return Array.from({ length: groupSize ?? 3 }, () => 0);
+}
+
+function createInitialState(groupSize) {
   return {
     cartQuantities: createEmptyCartQuantities(productsMock),
     paidAmount: 0,
     paymentHistory: [],
     hasSubmittedPayment: false,
-    sharingAnswer: 0,
+    sharingBaskets: createSharingBaskets(groupSize),
+    sharingCheckResult: null,
+    sharingAttempts: 0,
+    sumAnswer: 0,
+    sumCheckResult: null,
+    sumAttempts: 0,
+    changeAnswer: 0,
+    changeCheckResult: null,
+    changeAttempts: 0,
   };
 }
 
@@ -36,16 +57,28 @@ export const useMarketGameStore = create(
       levels: missionsMock,
       mission: missionsMock[0],
       products: productsMock,
+      productsShuffled: false,
       paymentOptions: paymentOptionsMock,
       soundEnabled: true,
       ...createProgressState(),
-      ...createInitialState(),
+      ...createInitialState(missionsMock[0].sharing?.groupSize),
       toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
+      shuffleProductsIfNeeded: () =>
+        set((state) =>
+          state.productsShuffled
+            ? {}
+            : { products: shuffleProducts(productsMock), productsShuffled: true },
+        ),
       selectLevel: (levelId) =>
-        set((state) => ({
-          mission: state.levels.find((level) => level.id === levelId) ?? state.levels[0],
-          ...createInitialState(),
-        })),
+        set((state) => {
+          const nextMission = state.levels.find((level) => level.id === levelId) ?? state.levels[0];
+          return {
+            mission: nextMission,
+            products: shuffleProducts(productsMock),
+            productsShuffled: true,
+            ...createInitialState(nextMission.sharing?.groupSize),
+          };
+        }),
       markLevelCompleted: (levelId) =>
         set((state) =>
           state.completedLevels.includes(levelId)
@@ -62,7 +95,13 @@ export const useMarketGameStore = create(
                 rewardedLevels: [...state.rewardedLevels, levelId],
               },
         ),
-      startMission: () => set((state) => ({ ...state, ...createInitialState() })),
+      startMission: () =>
+        set((state) => ({
+          ...state,
+          products: shuffleProducts(productsMock),
+          productsShuffled: true,
+          ...createInitialState(state.mission.sharing?.groupSize),
+        })),
       setQuantity: (productId, quantity) =>
         set((state) => ({
           cartQuantities: {
@@ -72,6 +111,15 @@ export const useMarketGameStore = create(
           paidAmount: 0,
           paymentHistory: [],
           hasSubmittedPayment: false,
+          sumAnswer: 0,
+          sumCheckResult: null,
+          sumAttempts: 0,
+          changeAnswer: 0,
+          changeCheckResult: null,
+          changeAttempts: 0,
+          sharingBaskets: createSharingBaskets(state.mission.sharing?.groupSize),
+          sharingCheckResult: null,
+          sharingAttempts: 0,
         })),
       incrementQuantity: (productId) =>
         set((state) => ({
@@ -82,6 +130,15 @@ export const useMarketGameStore = create(
           paidAmount: 0,
           paymentHistory: [],
           hasSubmittedPayment: false,
+          sumAnswer: 0,
+          sumCheckResult: null,
+          sumAttempts: 0,
+          changeAnswer: 0,
+          changeCheckResult: null,
+          changeAttempts: 0,
+          sharingBaskets: createSharingBaskets(state.mission.sharing?.groupSize),
+          sharingCheckResult: null,
+          sharingAttempts: 0,
         })),
       decrementQuantity: (productId) =>
         set((state) => ({
@@ -92,19 +149,40 @@ export const useMarketGameStore = create(
           paidAmount: 0,
           paymentHistory: [],
           hasSubmittedPayment: false,
+          sumAnswer: 0,
+          sumCheckResult: null,
+          sumAttempts: 0,
+          changeAnswer: 0,
+          changeCheckResult: null,
+          changeAttempts: 0,
+          sharingBaskets: createSharingBaskets(state.mission.sharing?.groupSize),
+          sharingCheckResult: null,
+          sharingAttempts: 0,
         })),
       clearCart: () =>
-        set(() => ({
+        set((state) => ({
           cartQuantities: createEmptyCartQuantities(productsMock),
           paidAmount: 0,
           paymentHistory: [],
           hasSubmittedPayment: false,
+          sumAnswer: 0,
+          sumCheckResult: null,
+          sumAttempts: 0,
+          changeAnswer: 0,
+          changeCheckResult: null,
+          changeAttempts: 0,
+          sharingBaskets: createSharingBaskets(state.mission.sharing?.groupSize),
+          sharingCheckResult: null,
+          sharingAttempts: 0,
         })),
       addPayment: (value) =>
         set((state) => ({
           paidAmount: state.paidAmount + value,
           paymentHistory: [...state.paymentHistory, value],
           hasSubmittedPayment: false,
+          changeAnswer: 0,
+          changeCheckResult: null,
+          changeAttempts: 0,
         })),
       removeLastPayment: () =>
         set((state) => {
@@ -115,6 +193,9 @@ export const useMarketGameStore = create(
             paidAmount: Math.max(0, state.paidAmount - lastPayment),
             paymentHistory: nextHistory,
             hasSubmittedPayment: false,
+            changeAnswer: 0,
+            changeCheckResult: null,
+            changeAttempts: 0,
           };
         }),
       clearPayment: () =>
@@ -122,18 +203,83 @@ export const useMarketGameStore = create(
           paidAmount: 0,
           paymentHistory: [],
           hasSubmittedPayment: false,
+          changeAnswer: 0,
+          changeCheckResult: null,
+          changeAttempts: 0,
         })),
       submitPayment: () => set(() => ({ hasSubmittedPayment: true })),
-      setSharingAnswer: (value) => set(() => ({ sharingAnswer: Math.max(0, Math.floor(value)) })),
-      incrementSharingAnswer: () => set((state) => ({ sharingAnswer: state.sharingAnswer + 1 })),
-      decrementSharingAnswer: () => set((state) => ({ sharingAnswer: Math.max(0, state.sharingAnswer - 1) })),
-      resetGame: () => set((state) => ({ soundEnabled: state.soundEnabled, ...createInitialState() })),
+      incrementSharingBasket: (index, totalQuantity) =>
+        set((state) => {
+          const assigned = state.sharingBaskets.reduce((sum, value) => sum + value, 0);
+          if (assigned >= totalQuantity) {
+            return {};
+          }
+          const nextBaskets = [...state.sharingBaskets];
+          nextBaskets[index] += 1;
+          return { sharingBaskets: nextBaskets, sharingCheckResult: null };
+        }),
+      decrementSharingBasket: (index) =>
+        set((state) => {
+          if (state.sharingBaskets[index] <= 0) {
+            return {};
+          }
+          const nextBaskets = [...state.sharingBaskets];
+          nextBaskets[index] -= 1;
+          return { sharingBaskets: nextBaskets, sharingCheckResult: null };
+        }),
+      checkSharingBaskets: (totalQuantity) =>
+        set((state) => {
+          const assigned = state.sharingBaskets.reduce((sum, value) => sum + value, 0);
+          const allEqual = state.sharingBaskets.every((value) => value === state.sharingBaskets[0]);
+          const isCorrect = assigned === totalQuantity && allEqual;
+          return {
+            sharingCheckResult: isCorrect ? "correct" : "incorrect",
+            sharingAttempts: isCorrect ? state.sharingAttempts : state.sharingAttempts + 1,
+          };
+        }),
+      setSumAnswer: (value) =>
+        set(() => ({ sumAnswer: Math.max(0, Math.floor(value)), sumCheckResult: null })),
+      incrementSumAnswer: () =>
+        set((state) => ({ sumAnswer: state.sumAnswer + 1, sumCheckResult: null })),
+      decrementSumAnswer: () =>
+        set((state) => ({ sumAnswer: Math.max(0, state.sumAnswer - 1), sumCheckResult: null })),
+      checkSumAnswer: (correctTotal) =>
+        set((state) => {
+          const isCorrect = state.sumAnswer === correctTotal;
+          return {
+            sumCheckResult: isCorrect ? "correct" : "incorrect",
+            sumAttempts: isCorrect ? state.sumAttempts : state.sumAttempts + 1,
+          };
+        }),
+      setChangeAnswer: (value) =>
+        set(() => ({ changeAnswer: Math.max(0, Math.floor(value)), changeCheckResult: null })),
+      incrementChangeAnswer: () =>
+        set((state) => ({ changeAnswer: state.changeAnswer + 1, changeCheckResult: null })),
+      decrementChangeAnswer: () =>
+        set((state) => ({ changeAnswer: Math.max(0, state.changeAnswer - 1), changeCheckResult: null })),
+      checkChangeAnswer: (correctChange) =>
+        set((state) => {
+          const isCorrect = state.changeAnswer === correctChange;
+          return {
+            changeCheckResult: isCorrect ? "correct" : "incorrect",
+            changeAttempts: isCorrect ? state.changeAttempts : state.changeAttempts + 1,
+          };
+        }),
+      resetGame: () =>
+        set((state) => ({
+          soundEnabled: state.soundEnabled,
+          products: shuffleProducts(productsMock),
+          productsShuffled: true,
+          ...createInitialState(state.mission.sharing?.groupSize),
+        })),
       restartAdventure: () =>
         set((state) => ({
           mission: state.levels[0],
           soundEnabled: state.soundEnabled,
+          products: shuffleProducts(productsMock),
+          productsShuffled: true,
           ...createProgressState(),
-          ...createInitialState(),
+          ...createInitialState(state.levels[0].sharing?.groupSize),
         })),
     }),
     {

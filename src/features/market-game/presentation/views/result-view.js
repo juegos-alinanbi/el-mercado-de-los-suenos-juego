@@ -6,11 +6,13 @@ import { useEffect, useRef } from "react";
 
 import { evaluateMissionSelection } from "@/features/market-game/application/use-cases/evaluate-mission-selection";
 import { evaluatePayment } from "@/features/market-game/application/use-cases/evaluate-payment";
-import { evaluateSharing } from "@/features/market-game/application/use-cases/evaluate-sharing";
+import { calculateMinimumPaymentPieces, calculateShareResult } from "@/features/market-game/domain/game-rules";
 import { useMarketGameStore } from "@/features/market-game/model/use-market-game-store";
 import { formatCurrency } from "@/shared/lib/format-currency";
 import { formatSubtractionEquation, formatSumEquation } from "@/shared/lib/format-equation";
+import { formatFichas, pluralize } from "@/shared/lib/pluralize";
 import { useSoundEffects } from "@/shared/lib/use-sound-effects";
+import { getProductIcon } from "@/shared/config/product-icons";
 import { ActionButton } from "@/shared/ui/action-button";
 import { EmojiIcon } from "@/shared/ui/emoji-icon";
 import { MascotCallout } from "@/shared/ui/mascot-callout";
@@ -40,7 +42,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
   if (!purchaseSuccess) {
     return {
       title: "Casi lo logras",
-      description: "Revisa el carrito o el pago y vuelve a intentarlo. Cuando la compra esté bien, el ahorro se convertirá en fichas premio.",
+      description: "Revisa el carrito o el pago y vuelve a intentarlo. Cuando la compra esté bien, el ahorro se convertirá en fichas.",
       accent: "amber",
       mood: "cat-worried",
     };
@@ -58,7 +60,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
   if (isFinalLevel && isLevelComplete) {
     return {
       title: "Terminaste toda la aventura",
-      description: `Cerraste la última misión, cuidaste el presupuesto y juntaste ${totalTokens} fichas en total. Este cierre especial seguirá apareciendo siempre en el último nivel del juego.`,
+      description: `Cerraste la última misión, cuidaste el presupuesto y juntaste ${formatFichas(totalTokens)} en total. Este cierre especial seguirá apareciendo siempre en el último nivel del juego.`,
       accent: "emerald",
       mood: "party",
     };
@@ -67,7 +69,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
   if (mission.id === "level-2") {
     return {
       title: "La fiesta ya tiene premio",
-      description: `En este nivel ahorraste y ganaste ${earnedTokens} fichas. Michi Money ya acumula ${totalTokens} fichas para su aventura.`,
+      description: `En este nivel ahorraste y ganaste ${formatFichas(earnedTokens)}. Michi Money ya acumula ${formatFichas(totalTokens)} para su aventura.`,
       accent: "rose",
       mood: "cat-happy",
     };
@@ -76,7 +78,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
   if (mission.id === "level-3") {
     return {
       title: "Compartiste y ahorraste muy bien",
-      description: `Además de resolver el reparto, convertiste tu ahorro en ${earnedTokens} fichas. Ya llevas ${totalTokens} fichas acumuladas.`,
+      description: `Además de resolver el reparto, convertiste tu ahorro en ${formatFichas(earnedTokens)}. Ya llevas ${formatFichas(totalTokens)} ${pluralize(totalTokens, "acumulada", "acumuladas")}.`,
       accent: "sky",
       mood: "party",
     };
@@ -84,7 +86,7 @@ function getResultMascotMessage(mission, purchaseSuccess, isLevelComplete, isFin
 
   return {
     title: "Lo lograste",
-    description: `Tu ahorro de este nivel se convirtió en ${earnedTokens} fichas. Ya tienes ${totalTokens} fichas acumuladas para seguir jugando.`,
+    description: `Tu ahorro de este nivel se convirtió en ${formatFichas(earnedTokens)}. Ya tienes ${formatFichas(totalTokens)} ${pluralize(totalTokens, "acumulada", "acumuladas")} para seguir jugando.`,
     accent: "emerald",
     mood: "cat-happy",
   };
@@ -164,6 +166,7 @@ export function ResultView() {
   const mission = useMarketGameStore((state) => state.mission);
   const products = useMarketGameStore((state) => state.products);
   const cartQuantities = useMarketGameStore((state) => state.cartQuantities);
+  const paymentOptions = useMarketGameStore((state) => state.paymentOptions);
   const paymentHistory = useMarketGameStore((state) => state.paymentHistory);
   const hasSubmittedPayment = useMarketGameStore((state) => state.hasSubmittedPayment);
   const resetGame = useMarketGameStore((state) => state.resetGame);
@@ -175,10 +178,13 @@ export function ResultView() {
   const savedAmount = useMarketGameStore((state) => state.savedAmount);
   const rewardTokens = useMarketGameStore((state) => state.rewardTokens);
   const rewardedLevels = useMarketGameStore((state) => state.rewardedLevels);
-  const sharingAnswer = useMarketGameStore((state) => state.sharingAnswer);
-  const incrementSharingAnswer = useMarketGameStore((state) => state.incrementSharingAnswer);
-  const decrementSharingAnswer = useMarketGameStore((state) => state.decrementSharingAnswer);
-  const { playClick, playSuccess } = useSoundEffects(soundEnabled);
+  const sharingBaskets = useMarketGameStore((state) => state.sharingBaskets);
+  const incrementSharingBasket = useMarketGameStore((state) => state.incrementSharingBasket);
+  const decrementSharingBasket = useMarketGameStore((state) => state.decrementSharingBasket);
+  const sharingCheckResult = useMarketGameStore((state) => state.sharingCheckResult);
+  const sharingAttempts = useMarketGameStore((state) => state.sharingAttempts);
+  const checkSharingBaskets = useMarketGameStore((state) => state.checkSharingBaskets);
+  const { playClick, playCoin, playSuccess, playError } = useSoundEffects(soundEnabled);
   const hasPlayedSuccessRef = useRef(false);
 
   const missionState = evaluateMissionSelection(mission, products, cartQuantities);
@@ -186,11 +192,23 @@ export function ResultView() {
   const effectivePaidAmount = visiblePaymentHistory.reduce((total, value) => total + value, 0);
   const paymentState = evaluatePayment(missionState.total, effectivePaidAmount);
   const purchaseSuccess = hasSubmittedPayment && missionState.isReadyForCheckout && paymentState.isEnough;
-  const sharingState = mission.sharing ? evaluateSharing(mission.sharing, sharingAnswer) : null;
-  const isSharingComplete = mission.sharing ? Boolean(sharingState?.isCorrect) : true;
+  const sharingResult = mission.sharing
+    ? calculateShareResult(mission.sharing.totalQuantity, mission.sharing.groupSize)
+    : null;
+  const sharingAssigned = sharingBaskets.reduce((sum, value) => sum + value, 0);
+  const sharingRemaining = mission.sharing ? mission.sharing.totalQuantity - sharingAssigned : 0;
+  const isSharingComplete = mission.sharing ? sharingCheckResult === "correct" : true;
   const isLevelComplete = purchaseSuccess && isSharingComplete;
   const missionSavings = purchaseSuccess ? Math.max(0, mission.budget - missionState.total) : 0;
-  const earnedTokens = isLevelComplete ? missionSavings : 0;
+  const minimumPaymentPieces = calculateMinimumPaymentPieces(
+    missionState.total,
+    paymentOptions.filter((option) => option.value <= mission.budget).map((option) => option.value),
+    mission.budget,
+  );
+  const achievedMinimalPieces =
+    mission.level === 3 && purchaseSuccess && visiblePaymentHistory.length === minimumPaymentPieces;
+  const piecesBonusTokens = achievedMinimalPieces ? 5 : 0;
+  const earnedTokens = isLevelComplete ? missionSavings + piecesBonusTokens : 0;
   const rewardAlreadyRegistered = rewardedLevels.includes(mission.id);
   const totalSavedAmount = savedAmount + (isLevelComplete && !rewardAlreadyRegistered ? missionSavings : 0);
   const totalRewardTokens = rewardTokens + (isLevelComplete && !rewardAlreadyRegistered ? earnedTokens : 0);
@@ -260,18 +278,37 @@ export function ResultView() {
     router.push("/");
   }
 
-  function handleIncrementSharing() {
-    playClick();
-    incrementSharingAnswer();
+  function handleIncrementSharingBasket(index) {
+    if (sharingRemaining <= 0) {
+      playError();
+      return;
+    }
+    playCoin();
+    incrementSharingBasket(index, mission.sharing.totalQuantity);
   }
 
-  function handleDecrementSharing() {
+  function handleDecrementSharingBasket(index) {
+    if (sharingBaskets[index] <= 0) {
+      playError();
+      return;
+    }
     playClick();
-    decrementSharingAnswer();
+    decrementSharingBasket(index);
+  }
+
+  function handleCheckSharing() {
+    const allEqual = sharingBaskets.every((value) => value === sharingBaskets[0]);
+    const isCorrect = sharingAssigned === mission.sharing.totalQuantity && allEqual;
+    if (isCorrect) {
+      playSuccess();
+    } else {
+      playError();
+    }
+    checkSharingBaskets(mission.sharing.totalQuantity);
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,#eefae8_0%,#d9f3c0_32%,#a7dfb3_100%)] px-6 py-10 text-game-ink sm:px-10">
+    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,#eefae8_0%,#d9f3c0_32%,#a7dfb3_100%)] px-4 py-8 text-game-ink sm:px-8 lg:px-10 xl:px-12">
       <SceneDecorations variant="result" />
       {purchaseSuccess ? (
         <>
@@ -287,7 +324,7 @@ export function ResultView() {
         </>
       ) : null}
 
-      <section className="relative mx-auto max-w-[70rem] space-y-6">
+      <section className="relative mx-auto max-w-[92rem] space-y-6">
         <ProgressSteps current="result" />
 
         {isLevelComplete && isFinalLevel ? <FinaleHero totalSavedAmount={totalSavedAmount} totalRewardTokens={totalRewardTokens} /> : null}
@@ -295,7 +332,7 @@ export function ResultView() {
         <motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[2rem] border-4 border-white bg-white/90 p-8 shadow-xl"
+          className="rounded-[2rem] border-4 border-white bg-white/90 p-6 shadow-xl sm:p-8 lg:p-9"
         >
           <div className="flex items-center gap-4">
             <div className="animate-pop-in flex h-16 w-16 items-center justify-center rounded-full bg-game-grass/15">
@@ -315,17 +352,17 @@ export function ResultView() {
             </div>
           </div>
 
-          <p className="mt-4 max-w-3xl text-xl leading-8 text-game-ink/80">
+          <p className="mt-4 max-w-4xl text-lg leading-8 text-game-ink/80 sm:text-xl">
             {isLevelComplete
               ? isFinalLevel
                 ? "Cerraste la última misión disponible. Este final especial siempre aparecerá en el último nivel del juego, aunque después agregues más niveles nuevos."
-                : "Lograste comprar exactamente lo pedido, respetaste el presupuesto y transformaste tu ahorro en fichas premio."
+                : "Lograste comprar exactamente lo pedido, respetaste el presupuesto y transformaste tu ahorro en fichas."
               : purchaseSuccess && mission.sharing
                 ? "La compra y el pago ya están correctos. Ahora resuelve el reparto para cerrar este nivel y guardar el premio final."
                 : "Todavía hay algo por corregir en la compra o en el pago. Revisa el detalle antes de volver a intentarlo."}
           </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-8 grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
             <MetricCard label="Compra correcta" value={missionState.isReadyForCheckout ? "Sí" : "No"} accent="emerald" icon="check" />
             <MetricCard label="Cambio de caja" value={formatCurrency(paymentState.change)} accent="sky" icon="coin" />
             <MetricCard label="Ahorro del nivel" value={formatCurrency(missionSavings)} accent="amber" icon="bill" />
@@ -339,7 +376,7 @@ export function ResultView() {
           </div>
 
           {isLevelComplete ? (
-            <article className="mt-6 rounded-[1.75rem] border-2 border-game-berry/20 bg-gradient-to-r from-game-sun/15 via-white to-game-berry/10 p-5 shadow-sm">
+            <article className="mt-6 rounded-[1.75rem] border-2 border-game-berry/20 bg-gradient-to-r from-game-sun/15 via-white to-game-berry/10 p-5 shadow-sm lg:p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <p className="text-sm font-extrabold uppercase tracking-wide text-game-berry">Alcancía de Michi Money</p>
@@ -362,7 +399,7 @@ export function ResultView() {
             </article>
           ) : null}
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+          <div className="mt-8 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
             <article className="rounded-[1.5rem] bg-slate-50 p-6">
               <h2 className="font-heading text-xl font-bold text-game-ink">Detalle matemático</h2>
               <div className="mt-4 space-y-3 text-base text-game-ink/80">
@@ -410,8 +447,8 @@ export function ResultView() {
                     message={
                       isLevelComplete
                         ? paymentState.isExact
-                          ? `Excelente trabajo. Pagaste exacto y ganaste ${earnedTokens} fichas por tu ahorro.`
-                          : `Excelente trabajo. Recibes ${formatCurrency(paymentState.change)} de cambio y ganas ${earnedTokens} fichas por ahorrar.`
+                          ? `Excelente trabajo. Pagaste exacto y ganaste ${formatFichas(earnedTokens)} por tu ahorro.`
+                          : `Excelente trabajo. Recibes ${formatCurrency(paymentState.change)} de cambio y ganas ${formatFichas(earnedTokens)} por ahorrar.`
                         : purchaseSuccess && mission.sharing
                           ? "Tu compra ya es correcta. Resuelve el reparto para guardar las fichas de este nivel."
                           : paymentState.statusMessage
@@ -436,7 +473,7 @@ export function ResultView() {
                 <div>
                   <h2 className="font-heading text-xl font-bold text-game-ink">Te falta cerrar el reto final</h2>
                   <p className="mt-2 max-w-2xl text-base leading-7 text-game-ink/80">
-                    La compra ya está validada, pero este nivel solo se completa cuando resuelves bien el reparto. Al acertar, se guardarán {missionSavings} fichas y {formatCurrency(missionSavings)} de ahorro en tu progreso.
+                    La compra ya está validada, pero este nivel solo se completa cuando resuelves bien el reparto. Al acertar, se guardarán {formatFichas(missionSavings)} y {formatCurrency(missionSavings)} de ahorro en tu progreso.
                   </p>
                 </div>
                 <RewardTokenDisplay count={missionSavings} maxVisible={6} size={18} tone="sky" />
@@ -445,14 +482,14 @@ export function ResultView() {
           ) : null}
 
           {isLevelComplete ? (
-            <article className="mt-6 rounded-[1.75rem] bg-game-grass/10 p-6 shadow-sm">
+            <article className="mt-6 rounded-[1.75rem] bg-game-grass/10 p-5 shadow-sm lg:p-6">
               <h2 className="font-heading text-xl font-bold text-game-ink">
                 {nextLevel ? `Desbloqueaste el nivel ${nextLevel.level}` : "Completaste todos los niveles"}
               </h2>
               <p className="mt-2 max-w-2xl text-base leading-7 text-game-ink/80">
                 {nextLevel
                   ? `Ya puedes continuar con ${nextLevel.title}. Tu ahorro y tus fichas quedan guardados para seguir la aventura.`
-                  : `Ya terminaste todas las misiones disponibles. Te llevas ${formatCurrency(totalSavedAmount)} de ahorro y ${totalRewardTokens} fichas acumuladas.`}
+                  : `Ya terminaste todas las misiones disponibles. Te llevas ${formatCurrency(totalSavedAmount)} de ahorro y ${formatFichas(totalRewardTokens)} ${pluralize(totalRewardTokens, "acumulada", "acumuladas")}.`}
               </p>
               {!nextLevel ? (
                 <div className="mt-4">
@@ -471,41 +508,92 @@ export function ResultView() {
 
           {purchaseSuccess && mission.sharing ? (
             <article className="mt-6 rounded-[1.5rem] bg-game-sky/10 p-6">
-              <h2 className="font-heading text-xl font-bold text-game-ink">Reto extra: reparto</h2>
+              <h2 className="font-heading text-xl font-bold text-game-ink">Último reto: reparte la merienda</h2>
               <p className="mt-2 max-w-2xl text-base leading-7 text-game-ink/80">
-                Tienes {mission.sharing.totalQuantity} {mission.sharing.productNamePlural} para repartir en partes iguales entre Michi Money y sus amigos ({mission.sharing.groupSize} en total). ¿Cuántas le tocan a cada uno?
+                Tienes {mission.sharing.totalQuantity} {pluralize(mission.sharing.totalQuantity, mission.sharing.productName.toLowerCase(), mission.sharing.productNamePlural)} para repartir en partes iguales entre Michi Money y sus amigos ({mission.sharing.groupSize} en total). Reparte las manzanas en las canastas hasta que a todos les toque lo mismo.
               </p>
 
-              <div className="mt-4 flex w-fit items-center gap-3 rounded-2xl bg-white p-3">
-                <button
-                  type="button"
-                  onClick={handleDecrementSharing}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border-b-4 border-slate-300 bg-white text-xl font-black text-game-ink transition active:translate-y-1 active:border-b-0"
-                >
-                  -
-                </button>
-                <span className="w-10 text-center font-heading text-2xl font-bold text-game-ink">{sharingAnswer}</span>
-                <button
-                  type="button"
-                  onClick={handleIncrementSharing}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border-b-4 border-[#c7381f] bg-game-coral text-xl font-black text-white transition active:translate-y-1 active:border-b-0"
-                >
-                  +
-                </button>
+              <div className="mt-4">
+                <p className="text-sm font-semibold uppercase tracking-wide text-game-ink/50">Manzanas sin repartir</p>
+                <div className="mt-2 flex min-h-[3.5rem] flex-wrap items-center gap-2 rounded-2xl bg-white p-3">
+                  {sharingRemaining > 0 ? (
+                    Array.from({ length: sharingRemaining }).map((_, index) => (
+                      <EmojiIcon key={index} name={getProductIcon(mission.sharing.productId)} size={28} />
+                    ))
+                  ) : (
+                    <span className="text-sm font-semibold text-game-grass">¡Repartiste todas!</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {sharingBaskets.map((count, index) => (
+                  <div key={index} className="rounded-2xl bg-white p-4 text-center">
+                    <EmojiIcon name={index === 0 ? "cat-happy" : "cat-neutral"} size={36} />
+                    <p className="mt-1 text-sm font-semibold text-game-ink/60">{index === 0 ? "Michi Money" : `Amigo ${index}`}</p>
+                    <div className="mt-2 flex min-h-[2.25rem] flex-wrap items-center justify-center gap-1">
+                      {Array.from({ length: count }).map((_, appleIndex) => (
+                        <EmojiIcon key={appleIndex} name={getProductIcon(mission.sharing.productId)} size={20} />
+                      ))}
+                    </div>
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDecrementSharingBasket(index)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border-b-4 border-slate-300 bg-white text-lg font-black text-game-ink transition active:translate-y-1 active:border-b-0"
+                      >
+                        -
+                      </button>
+                      <span className="w-6 text-center font-heading text-xl font-bold text-game-ink">{count}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleIncrementSharingBasket(index)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border-b-4 border-[#c7381f] bg-game-coral text-lg font-black text-white transition active:translate-y-1 active:border-b-0"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4">
+                <ActionButton variant="success" onClick={handleCheckSharing}>Comprobar</ActionButton>
               </div>
 
               <div className="mt-4">
                 <StatusBanner
                   message={
-                    sharingAnswer === 0
-                      ? "Ajusta el contador para responder."
-                      : sharingState.isCorrect
-                        ? `Correcto. ${mission.sharing.totalQuantity} entre ${mission.sharing.groupSize} son ${sharingState.quotient} para cada uno.`
-                        : "Todavía no es correcto, sigue intentando."
+                    sharingCheckResult === "correct"
+                      ? `¡Correcto! ${mission.sharing.totalQuantity} entre ${mission.sharing.groupSize} son ${sharingResult.quotient} para cada uno.`
+                      : sharingCheckResult === "incorrect"
+                        ? sharingAttempts === 1
+                          ? "Piensa: si divides el total en partes iguales, ¿cuántas quedan por persona?"
+                          : sharingAttempts === 2
+                            ? "Reparte de a una manzana por canasta, una ronda a la vez, y cuenta cuántas rondas alcanzas."
+                            : `El resultado correcto es ${sharingResult.quotient} para cada uno. Ajusta las canastas a ese número y presiona Comprobar.`
+                        : "Reparte las manzanas en las canastas y presiona Comprobar cuando tengas tu respuesta."
                   }
-                  tone={sharingAnswer === 0 ? "neutral" : sharingState.isCorrect ? "success" : "warning"}
+                  tone={sharingCheckResult === "correct" ? "success" : sharingCheckResult === "incorrect" ? "warning" : "neutral"}
                 />
               </div>
+            </article>
+          ) : null}
+
+          {purchaseSuccess && mission.level === 3 ? (
+            <article className="mt-6 rounded-[1.5rem] bg-game-sky/10 p-6">
+              <h2 className="font-heading text-xl font-bold text-game-ink">Reto extra: pago eficiente</h2>
+              {achievedMinimalPieces ? (
+                <p className="mt-2 max-w-2xl text-base leading-7 text-game-ink/80">
+                  {isLevelComplete
+                    ? `¡Pago justo y perfecto! Usaste la menor cantidad de monedas y billetes posible. Por ser tan eficiente, ganaste ${formatFichas(piecesBonusTokens)} extra además de tu ahorro.`
+                    : `¡Pago justo y perfecto! Usaste la menor cantidad de monedas y billetes posible. Resuelve el reparto para guardar ${formatFichas(piecesBonusTokens)} extra.`}
+                </p>
+              ) : (
+                <p className="mt-2 max-w-2xl text-base leading-7 text-game-ink/80">
+                  Completaste el pago correctamente. Tip: la próxima vez intenta pagar con menos monedas y billetes para ganar fichas extra.
+                </p>
+              )}
             </article>
           ) : null}
 

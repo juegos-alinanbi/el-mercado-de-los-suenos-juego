@@ -62,6 +62,33 @@ export function calculateShareResult(totalQuantity, groupSize) {
   };
 }
 
+export function calculateMinimumPaymentPieces(total, denominationValues, maxAmount) {
+  if (total <= 0) {
+    return 0;
+  }
+
+  const cap = Math.max(maxAmount ?? total, total);
+  const minPiecesForAmount = new Array(cap + 1).fill(Infinity);
+  minPiecesForAmount[0] = 0;
+
+  for (let amount = 1; amount <= cap; amount++) {
+    for (const value of denominationValues) {
+      if (value <= amount && minPiecesForAmount[amount - value] + 1 < minPiecesForAmount[amount]) {
+        minPiecesForAmount[amount] = minPiecesForAmount[amount - value] + 1;
+      }
+    }
+  }
+
+  let best = Infinity;
+  for (let amount = total; amount <= cap; amount++) {
+    if (minPiecesForAmount[amount] < best) {
+      best = minPiecesForAmount[amount];
+    }
+  }
+
+  return best === Infinity ? 0 : best;
+}
+
 export function isLevelUnlocked(levels, levelId, completedLevels) {
   const index = levels.findIndex((level) => level.id === levelId);
 

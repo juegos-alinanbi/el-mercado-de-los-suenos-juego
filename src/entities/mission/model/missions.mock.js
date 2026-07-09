@@ -18,12 +18,12 @@ export const missionsMock = [
     level: 2,
     title: "Misión 2: La fiesta de cumpleaños",
     description:
-      "Michi Money organiza una fiesta y necesita comprar más cantidad de cada cosa sin superar el presupuesto de $20.",
+      "Michi Money organiza una fiesta y necesita comprar pan, jugo, galletas y queso sin superar el presupuesto de $20.",
     budget: 20,
     objectives: [
-      { id: "product-pan", name: "Pan", quantity: 3 },
-      { id: "product-milk", name: "Leche", quantity: 2 },
-      { id: "product-apple", name: "Manzana", quantity: 2 },
+      { id: "product-pan", name: "Pan", quantity: 2 },
+      { id: "product-juice", name: "Jugo", quantity: 1 },
+      { id: "product-cookies", name: "Galletas", quantity: 2 },
       { id: "product-cheese", name: "Queso", quantity: 1 },
     ],
     sharing: null,
@@ -33,11 +33,13 @@ export const missionsMock = [
     level: 3,
     title: "Misión 3: La merienda compartida",
     description:
-      "Michi Money invita a 2 amigos a la merienda. Compra lo necesario y luego reparte las manzanas en partes iguales entre los 3.",
-    budget: 15,
+      "Michi Money invita a 2 amigos a la merienda. Compra zanahorias, galletas, plátanos, huevos y manzanas, y luego reparte las manzanas en partes iguales entre los 3.",
+    budget: 21,
     objectives: [
-      { id: "product-pan", name: "Pan", quantity: 2 },
-      { id: "product-milk", name: "Leche", quantity: 1 },
+      { id: "product-carrot", name: "Zanahoria", quantity: 2 },
+      { id: "product-cookies", name: "Galletas", quantity: 1 },
+      { id: "product-banana", name: "Plátano", quantity: 1 },
+      { id: "product-egg", name: "Huevos", quantity: 1 },
       { id: "product-apple", name: "Manzana", quantity: 6 },
     ],
     sharing: {

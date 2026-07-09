@@ -41,4 +41,32 @@ export const productsMock = [
     description: "Producto más caro para reforzar presupuesto.",
     price: 5,
   },
+  {
+    id: "product-banana",
+    name: "Plátano",
+    category: "Frutas",
+    description: "Producto distractor para practicar la búsqueda.",
+    price: 2,
+  },
+  {
+    id: "product-carrot",
+    name: "Zanahoria",
+    category: "Verduras",
+    description: "Producto distractor rico en vitaminas.",
+    price: 2,
+  },
+  {
+    id: "product-egg",
+    name: "Huevos",
+    category: "Abarrotes",
+    description: "Producto distractor para completar la despensa.",
+    price: 4,
+  },
+  {
+    id: "product-chocolate",
+    name: "Chocolate",
+    category: "Snacks",
+    description: "Producto distractor, un gusto ocasional.",
+    price: 4,
+  },
 ];
