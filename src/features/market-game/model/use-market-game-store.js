@@ -60,9 +60,11 @@ export const useMarketGameStore = create(
       productsShuffled: false,
       paymentOptions: paymentOptionsMock,
       soundEnabled: true,
+      musicEnabled: true,
       ...createProgressState(),
       ...createInitialState(missionsMock[0].sharing?.groupSize),
       toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
+      toggleMusic: () => set((state) => ({ musicEnabled: !state.musicEnabled })),
       shuffleProductsIfNeeded: () =>
         set((state) =>
           state.productsShuffled
@@ -288,6 +290,7 @@ export const useMarketGameStore = create(
       partialize: (state) => ({
         completedLevels: state.completedLevels,
         soundEnabled: state.soundEnabled,
+        musicEnabled: state.musicEnabled,
         savedAmount: state.savedAmount,
         rewardTokens: state.rewardTokens,
         rewardedLevels: state.rewardedLevels,

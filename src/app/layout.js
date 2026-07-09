@@ -1,5 +1,6 @@
 import { Baloo_2, Nunito } from "next/font/google";
 
+import { BackgroundMusicPlayer } from "@/shared/ui/background-music-player";
 import "./globals.css";
 
 const baloo = Baloo_2({
@@ -35,6 +36,7 @@ export default function RootLayout({ children }) {
         className="min-h-full bg-background text-foreground"
         suppressHydrationWarning
       >
+        <BackgroundMusicPlayer />
         {children}
       </body>
     </html>

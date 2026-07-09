@@ -17,6 +17,8 @@ export function ProgressSteps({ current }) {
   const currentIndex = steps.findIndex((step) => step.id === current);
   const soundEnabled = useMarketGameStore((state) => state.soundEnabled);
   const toggleSound = useMarketGameStore((state) => state.toggleSound);
+  const musicEnabled = useMarketGameStore((state) => state.musicEnabled);
+  const toggleMusic = useMarketGameStore((state) => state.toggleMusic);
   const savedAmount = useMarketGameStore((state) => state.savedAmount);
   const rewardTokens = useMarketGameStore((state) => state.rewardTokens);
   const { playClick, playSuccess } = useSoundEffects(true);
@@ -30,6 +32,11 @@ export function ProgressSteps({ current }) {
 
     toggleSound();
     playSuccess();
+  }
+
+  function handleMusicToggle() {
+    playClick();
+    toggleMusic();
   }
 
   return (
@@ -74,6 +81,16 @@ export function ProgressSteps({ current }) {
             Ahorro: {formatCurrency(savedAmount)}
           </div>
           <RewardTokenDisplay count={rewardTokens} compact tone="rose" />
+          <button
+            type="button"
+            onClick={handleMusicToggle}
+            className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition ${
+              musicEnabled ? "border-game-sky bg-game-sky/10 text-game-sky" : "border-slate-300 bg-slate-50 text-slate-500"
+            }`}
+          >
+            <EmojiIcon name="musical-note" size={18} />
+            {musicEnabled ? "Música activa" : "Música apagada"}
+          </button>
           <button
             type="button"
             onClick={handleSoundToggle}

@@ -35,6 +35,7 @@ const ICONS = {
   clover: "/icons/four-leaf-clover.svg",
   abacus: "/icons/abacus.svg",
   lock: "/icons/locked.svg",
+  "musical-note": "/icons/musical-note.svg",
 };
 
 export function EmojiIcon({ name, size = 40, className = "", alt = "" }) {
