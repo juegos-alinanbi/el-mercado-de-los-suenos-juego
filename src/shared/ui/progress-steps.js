@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useSoundEffects } from "@/shared/lib/use-sound-effects";
 import { useMarketGameStore } from "@/features/market-game/model/use-market-game-store";
@@ -22,6 +22,7 @@ export function ProgressSteps({ current }) {
   const savedAmount = useMarketGameStore((state) => state.savedAmount);
   const rewardTokens = useMarketGameStore((state) => state.rewardTokens);
   const { playClick, playSuccess } = useSoundEffects(true);
+  const { playClick: playMusicToggleClick } = useSoundEffects(soundEnabled);
 
   function handleSoundToggle() {
     if (soundEnabled) {
@@ -35,15 +36,18 @@ export function ProgressSteps({ current }) {
   }
 
   function handleMusicToggle() {
-    playClick();
+    playMusicToggleClick();
     toggleMusic();
   }
 
+  const musicLabel = musicEnabled ? "Desactivar música de fondo" : "Activar música de fondo";
+  const soundLabel = soundEnabled ? "Desactivar efectos de sonido" : "Activar efectos de sonido";
+
   return (
     <div className="rounded-[2rem] border-4 border-white bg-white/78 p-4 shadow-md sm:p-5">
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_auto] lg:items-center">
-        <div className="flex justify-center">
-          <div className="flex flex-wrap items-end justify-center gap-x-1 gap-y-3">
+      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+        <div className="flex justify-center xl:justify-start">
+          <div className="flex flex-wrap items-end justify-center gap-x-1 gap-y-3 xl:justify-start">
             {steps.map((step, index) => {
               const isActive = step.id === current;
               const isDone = index < currentIndex;
@@ -75,8 +79,8 @@ export function ProgressSteps({ current }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-end">
-          <div className="inline-flex items-center gap-2 rounded-full border-2 border-game-sun/60 bg-game-sun/10 px-4 py-2 text-sm font-bold text-game-ink shadow-sm">
+        <div className="flex flex-wrap items-center justify-center gap-2 xl:justify-end">
+          <div className="inline-flex items-center gap-2 rounded-full border-2 border-game-sun/60 bg-game-sun/10 px-3 py-2 text-sm font-bold text-game-ink shadow-sm">
             <EmojiIcon name="coin" size={18} />
             Ahorro: {formatCurrency(savedAmount)}
           </div>
@@ -84,22 +88,24 @@ export function ProgressSteps({ current }) {
           <button
             type="button"
             onClick={handleMusicToggle}
-            className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition ${
+            title={musicLabel}
+            aria-label={musicLabel}
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-full border-2 transition ${
               musicEnabled ? "border-game-sky bg-game-sky/10 text-game-sky" : "border-slate-300 bg-slate-50 text-slate-500"
             }`}
           >
             <EmojiIcon name="musical-note" size={18} />
-            {musicEnabled ? "Música activa" : "Música apagada"}
           </button>
           <button
             type="button"
             onClick={handleSoundToggle}
-            className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition ${
+            title={soundLabel}
+            aria-label={soundLabel}
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-full border-2 transition ${
               soundEnabled ? "border-game-grass bg-game-grass/10 text-game-grass" : "border-slate-300 bg-slate-50 text-slate-500"
             }`}
           >
-            <EmojiIcon name={soundEnabled ? "party" : "cross"} size={18} />
-            {soundEnabled ? "Sonido activo" : "Sonido apagado"}
+            <EmojiIcon name={soundEnabled ? "speaker" : "cross"} size={18} />
           </button>
         </div>
       </div>

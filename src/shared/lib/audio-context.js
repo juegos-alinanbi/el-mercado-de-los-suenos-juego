@@ -3,6 +3,11 @@
 let sharedAudioContext = null;
 let unlockListenersAttached = false;
 let hasWarnedUnsupported = false;
+let pendingUnlockCallbacks = [];
+
+// pointerdown cubre mouse/touch/pen en navegadores modernos, pero se agregan
+// click y mousedown como respaldo por si algun navegador no lo dispara igual.
+const UNLOCK_EVENTS = ["pointerdown", "mousedown", "touchend", "keydown", "click"];
 
 function getAudioContextClass() {
   if (typeof window === "undefined") {
@@ -10,6 +15,18 @@ function getAudioContextClass() {
   }
 
   return window.AudioContext || window.webkitAudioContext || null;
+}
+
+function flushPendingUnlockCallbacks() {
+  const callbacks = pendingUnlockCallbacks;
+  pendingUnlockCallbacks = [];
+  callbacks.forEach((callback) => {
+    try {
+      callback();
+    } catch (error) {
+      console.warn("[audio] Fallo al ejecutar un callback tras desbloquear el audio.", error);
+    }
+  });
 }
 
 function attachUnlockListeners(audioContext) {
@@ -21,9 +38,17 @@ function attachUnlockListeners(audioContext) {
 
   const tryResume = () => {
     if (audioContext.state === "suspended") {
-      audioContext.resume().catch((error) => {
-        console.warn("[audio] El navegador no permitio reanudar el audio tras la interaccion del usuario.", error);
-      });
+      audioContext
+        .resume()
+        .then(flushPendingUnlockCallbacks)
+        .catch((error) => {
+          console.warn("[audio] El navegador no permitio reanudar el audio tras la interaccion del usuario.", error);
+        });
+      return;
+    }
+
+    if (audioContext.state === "running" && pendingUnlockCallbacks.length > 0) {
+      flushPendingUnlockCallbacks();
     }
   };
 
@@ -31,7 +56,7 @@ function attachUnlockListeners(audioContext) {
   // suspendido aunque el resume() se dispare desde un boton concreto. Este
   // listener global reintenta el desbloqueo con la primera interaccion real,
   // que es donde suele fallar el audio en produccion pero no en local.
-  ["pointerdown", "touchend", "keydown"].forEach((eventName) => {
+  UNLOCK_EVENTS.forEach((eventName) => {
     window.addEventListener(eventName, tryResume, { passive: true });
   });
 }
@@ -62,7 +87,7 @@ export function getSharedAudioContext() {
   return sharedAudioContext;
 }
 
-export function createTone(audioContext, frequency, startAt, duration, volume, type) {
+export function createTone(audioContext, frequency, startAt, duration, volume, type, destinationNode) {
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
 
@@ -74,7 +99,7 @@ export function createTone(audioContext, frequency, startAt, duration, volume, t
   gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
 
   oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  gainNode.connect(destinationNode ?? audioContext.destination);
 
   oscillator.start(startAt);
   oscillator.stop(startAt + duration + 0.02);
@@ -112,4 +137,23 @@ export function withAudioContext(enabled, playback) {
   }
 
   runPlayback();
+}
+
+// Ejecuta `callback` en cuanto el AudioContext compartido este realmente
+// "running". Si ya lo esta, corre de inmediato; si no, queda encolado y se
+// dispara junto con el resto del audio del juego en la primera interaccion
+// real del usuario (mismo mecanismo global que ya desbloquea los efectos).
+export function runWhenAudioUnlocked(callback) {
+  const context = getSharedAudioContext();
+  if (!context) {
+    return;
+  }
+
+  if (context.state === "running") {
+    callback();
+    return;
+  }
+
+  pendingUnlockCallbacks.push(callback);
+  context.resume().then(flushPendingUnlockCallbacks).catch(() => {});
 }

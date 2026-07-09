@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { createTone, getSharedAudioContext } from "@/shared/lib/audio-context";
+import { createTone, getSharedAudioContext, runWhenAudioUnlocked } from "@/shared/lib/audio-context";
 
 const NOTE_DURATION = 0.32;
 
@@ -20,100 +20,88 @@ const BASS_NOTES = [130.81, 196.0, 130.81, 196.0, 130.81, 196.0, 130.81, 196.0];
 
 const LOOP_DURATION = MELODY_NOTES.length * NOTE_DURATION;
 const BASS_NOTE_DURATION = LOOP_DURATION / BASS_NOTES.length;
-const UNLOCK_EVENTS = ["pointerdown", "touchend", "keydown"];
+const STOP_FADE_SECONDS = 0.05;
 
 export function useBackgroundMusic(enabled) {
   const timeoutIdRef = useRef(null);
   const isPlayingRef = useRef(false);
-  const removeRetryListenersRef = useRef(null);
+  const shouldPlayRef = useRef(false);
+  const activeLoopGainsRef = useRef([]);
 
   useEffect(() => {
-    function clearRetryListeners() {
-      if (removeRetryListenersRef.current) {
-        removeRetryListenersRef.current();
-        removeRetryListenersRef.current = null;
-      }
+    shouldPlayRef.current = enabled;
+
+    function silenceActiveLoops(context) {
+      const now = context.currentTime;
+      activeLoopGainsRef.current.forEach((gainNode) => {
+        try {
+          gainNode.gain.cancelScheduledValues(now);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+          gainNode.gain.linearRampToValueAtTime(0.0001, now + STOP_FADE_SECONDS);
+        } catch {
+          // El nodo ya pudo haberse liberado; no hay nada que silenciar.
+        }
+      });
+      activeLoopGainsRef.current = [];
     }
 
     function scheduleLoop() {
+      if (!shouldPlayRef.current) {
+        return;
+      }
+
       const context = getSharedAudioContext();
       if (!context) {
         return;
       }
 
+      const loopGain = context.createGain();
+      loopGain.gain.setValueAtTime(1, context.currentTime);
+      loopGain.connect(context.destination);
+      activeLoopGainsRef.current.push(loopGain);
+
       const now = context.currentTime;
 
       MELODY_NOTES.forEach((frequency, index) => {
-        createTone(context, frequency, now + index * NOTE_DURATION, NOTE_DURATION * 0.82, 0.02, "triangle");
+        createTone(context, frequency, now + index * NOTE_DURATION, NOTE_DURATION * 0.82, 0.02, "triangle", loopGain);
       });
 
       BASS_NOTES.forEach((frequency, index) => {
-        createTone(context, frequency, now + index * BASS_NOTE_DURATION, BASS_NOTE_DURATION * 0.92, 0.013, "sine");
+        createTone(context, frequency, now + index * BASS_NOTE_DURATION, BASS_NOTE_DURATION * 0.92, 0.013, "sine", loopGain);
       });
 
       timeoutIdRef.current = setTimeout(scheduleLoop, LOOP_DURATION * 1000);
     }
 
     function begin() {
-      if (isPlayingRef.current) {
+      if (!shouldPlayRef.current || isPlayingRef.current) {
         return;
       }
       isPlayingRef.current = true;
-      clearRetryListeners();
       scheduleLoop();
-    }
-
-    function armRetry(context) {
-      if (removeRetryListenersRef.current) {
-        return;
-      }
-
-      const retry = () => {
-        if (isPlayingRef.current) {
-          clearRetryListeners();
-          return;
-        }
-        context.resume().then(begin).catch(() => {});
-      };
-
-      UNLOCK_EVENTS.forEach((eventName) => window.addEventListener(eventName, retry, { passive: true }));
-      removeRetryListenersRef.current = () => {
-        UNLOCK_EVENTS.forEach((eventName) => window.removeEventListener(eventName, retry));
-      };
-    }
-
-    function startLoop() {
-      const context = getSharedAudioContext();
-      if (!context) {
-        return;
-      }
-
-      if (context.state === "running") {
-        begin();
-        return;
-      }
-
-      context.resume().then(begin).catch(() => {});
-      // Respaldo: si el navegador bloqueo el autoplay, arrancamos en la
-      // primera interaccion real del usuario, igual que el resto del audio.
-      armRetry(context);
     }
 
     function stopLoop() {
       isPlayingRef.current = false;
-      clearRetryListeners();
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
         timeoutIdRef.current = null;
       }
+      const context = getSharedAudioContext();
+      if (context) {
+        silenceActiveLoops(context);
+      }
     }
 
     if (enabled) {
-      startLoop();
+      runWhenAudioUnlocked(begin);
     } else {
       stopLoop();
     }
 
-    return stopLoop;
+    return () => {
+      shouldPlayRef.current = false;
+      stopLoop();
+    };
   }, [enabled]);
 }

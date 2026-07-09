@@ -1,4 +1,4 @@
-const ICONS = {
+﻿const ICONS = {
   bread: "/icons/bread.svg",
   milk: "/icons/glass-of-milk.svg",
   apple: "/icons/red-apple.svg",
@@ -36,6 +36,7 @@ const ICONS = {
   abacus: "/icons/abacus.svg",
   lock: "/icons/locked.svg",
   "musical-note": "/icons/musical-note.svg",
+  speaker: "/icons/speaker.svg",
 };
 
 export function EmojiIcon({ name, size = 40, className = "", alt = "" }) {
